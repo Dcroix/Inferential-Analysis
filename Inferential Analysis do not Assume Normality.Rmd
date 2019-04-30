@@ -1,0 +1,74 @@
+---
+title: "Inferential Analysis - Data sets that do not Assume Normality"
+author: "Paolo G. Hilado"
+date: "April 30, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Open the data set
+```{r}
+library(xlsx)
+data <- read.xlsx("Experiment1.xlsx", sheetIndex = "Sheet1")
+```
+
+## Check the first and last 6 rows, structure of the data and generate a summary
+```{r}
+head(data)
+tail(data)
+str(data)
+summary(data)
+```
+
+## Create subsets by test administration and groups
+```{r}
+#Retrieve Pretest scores from Control Group
+CntrlPre <- data[data$Group =="Cntrl",]$Pre
+#Retrieve Pretest scores from Treatment Group
+TxPre <- data[data$Group == "Tx",]$Pre
+#Retrieve PostTest scores from Control Group
+CntrlPost <- data[data$Group == "Cntrl",]$Post
+#Retrive PostTest scores from Treatment Group
+TxPost <- data[data$Group == "Tx",]$Post
+```
+
+
+# Test for Normality with Anderson-Darling
+```{r}
+library(nortest)
+nordata <- cbind(CntrlPre, CntrlPost, TxPre, TxPost)
+apply(nordata, 2, function(x) ad.test(x))
+```
+
+## Generate Probability Density Function Plots
+```{r}
+par(mfrow=c(2,2))
+apply(nordata, 2, function(x) plot(density(x), col = "firebrick"))
+```
+
+
+# Test for Sig. Diff. in Pretest Scores of Control and Treatment
+```{r}
+wilcox.test(CntrlPre, jitter(TxPre), alternative = "two.sided", paired = FALSE) # There is no significant difference in the pretest scores between Control and Treatment. This is consistent with the expectations of an experimental design. 
+```
+
+
+# Test for Sig. Diff. in Pretest and Posttest Scores of Control Group
+```{r}
+wilcox.test(CntrlPre, jitter(CntrlPost), alternative = "two.sided", paired = TRUE) # Presence of significant difference in pretest and post test scores of the Control Group indicate that an increase in scores in the Post Test may be attributed by other factors beside chance. This makes the findings rather intriguing considering the change in scores despite the fact that it occured in the Control Group; one that was not introduced with Treatment.
+```
+
+# Test for Sig. Diff. in Pretest and Posttest Scores of Treatment Group
+```{r}
+wilcox.test(TxPre, jitter(TxPost), alternative = "two.sided", paired = TRUE) # There exists a significant difference in the pretest and post test scores for the Treatment group which somehow indicates that the change may be related to the introduction of the treatment rather than chance. However, this is questionable considering the observation in the Control group wherein there is an increase in scores despite the fact that there was no treatment introduced. 
+```
+
+## Test for Sig. Diff. in PostTest Scores of Control and Treatment Group
+```{r}
+wilcox.test(CntrlPost, jitter(TxPost), alternative = "two.sided", paired = FALSE) # When comparing the Post Test Scores of Control and Treatment Group, no significant difference is observed. This further explains the observations made earlier. 
+```
+
+### As such it can be noted that the introduction of the treatment does not necessarily lead to improvement in scores given that there is no significant difference in the post test scores of the Control and Treatment group; any difference observed in the median is attributed to chance. Although a significant increase in scores can be noted between the Pre and Post Test of the Treatment Group,  it may be inaccurate to attribute this to the treatment knowing that such significant increase is also observed in the Pre and Post Test scores of the Control Group. 
